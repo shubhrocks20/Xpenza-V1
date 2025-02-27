@@ -1,10 +1,14 @@
 import express from 'express'
+import { NextFunction , Response, Request} from "express";
 import axios from 'axios'
 import cors from 'cors'
+import userRouter from './routes/users/user.routes'
+import { globalErrorHandler } from './middlewares/globalErrorHandler'
 const app = express()
 
-
 app.use(cors())
+app.use(express.json())
+app.use('/api/v1/users', userRouter)
 
 app.get('/auth/github', async (req, res) => {
     const {code} = req.query
@@ -24,6 +28,10 @@ app.get('/auth/github', async (req, res) => {
          res.json({error: 'Internal server error'})
     }
 })
-app.listen(3011, () => {
-    console.log(`Server Listening at 3011`)
+const PORT = process.env.PORT || 8080
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  globalErrorHandler(err, req, res, next);
+});
+app.listen(PORT, () => {
+    console.log(`Server Listening at http://localhost:${PORT}`)
 })

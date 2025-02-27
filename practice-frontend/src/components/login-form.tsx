@@ -45,9 +45,7 @@ export function LoginForm({
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: async (response) => {
       try {
-        const userInfo = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
-          headers: { Authorization: `Bearer ${response?.access_token}` }
-        })
+        const userInfo = await axios.post(`${import.meta.env.VITE_BACKEND_URI}/users/auth/google?access_token=${response.access_token}`)
         console.log('Response of Google Auth: ', userInfo)
       } catch (error) {
         console.error("Google Login Error:", error)
