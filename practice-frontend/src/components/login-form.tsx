@@ -13,6 +13,9 @@ import React, { useEffect, useState } from "react"
 import { useGoogleLogin } from "@react-oauth/google"
 import axios from "axios"
 import { Github } from "lucide-react"
+import { useMutation } from "@tanstack/react-query"
+import { googleAuth } from "@/http"
+import { useCookies } from 'react-cookie';
 
 interface LoginFormProps extends React.ComponentPropsWithoutRef<"div"> {
   handleSubmit: (formData: { email: string; password: string }) => void;
@@ -28,6 +31,17 @@ export function LoginForm({
     password: "",
   })
   const [githubUser, setGithubUser] = useState(null)
+  const googleMutation = useMutation({
+    mutationFn: googleAuth,
+    onSuccess: (data) => {
+      console.log(data)
+      window.location.reload()
+    },
+    onError: (err) => {
+      console.log(err)
+    }
+
+  })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
@@ -41,22 +55,17 @@ export function LoginForm({
     handleSubmit(formData)
   }
 
-  // ✅ Google Login
+
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: async (response) => {
-      try {
-        const userInfo = await axios.post(`${import.meta.env.VITE_BACKEND_URI}/users/auth/google?access_token=${response.access_token}`)
-        console.log('Response of Google Auth: ', userInfo)
-      } catch (error) {
-        console.error("Google Login Error:", error)
-      }
+     googleMutation.mutate(response.access_token)
     },
     onError: (error) => {
       console.error(error)
     },
   })
 
-  // ✅ GitHub Login
+
   const handleGithubLogin = () => {
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${import.meta.env.VITE_GITHUB_CLIENT_ID}&redirect_uri=${window.location.origin}&scope=user`
     window.location.href = githubAuthUrl

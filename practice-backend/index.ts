@@ -6,7 +6,12 @@ import userRouter from './routes/users/user.routes'
 import { globalErrorHandler } from './middlewares/globalErrorHandler'
 const app = express()
 
-app.use(cors())
+app.use(cors({
+  origin: `${process.env.FRONTEND_URI}`,
+  credentials: true
+}))
+
+
 app.use(express.json())
 app.use('/api/v1/users', userRouter)
 
