@@ -1,16 +1,22 @@
-import React, { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
-import Cookies from "js-cookie";
+import { JSX, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "./AuthContext";
 
 interface ProtectedRouteProps {
-  children: ReactNode;
+    children: JSX.Element;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const getAccessToken = () => Cookies.get("access_token");
-  console.log(getAccessToken())
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+    const { isAuthenticated } = useAuth();
+    const navigate = useNavigate();
 
-  return getAccessToken() ? children : Navigate({to: '/login'});
+    useEffect(() => {
+        if (!isAuthenticated) {
+            navigate("/login", { replace: true });
+        }
+    }, [isAuthenticated, navigate]);
+
+    return isAuthenticated ? children : null;
 };
 
 export default ProtectedRoute;

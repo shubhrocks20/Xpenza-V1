@@ -1,17 +1,22 @@
-import React, { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
-import Cookies from "js-cookie";
+import { JSX, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "./AuthContext";
 
-interface ProtectedRouteProps {
-  children: ReactNode;
+interface PrivateRouteProps {
+    children: JSX.Element;
 }
 
-const PrivateRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const getAccessToken = () => Cookies.get("access_token");
-  const token = getAccessToken()
-  console.log(token)
+const PrivateRoute = ({ children }: PrivateRouteProps) => {
+    const { isAuthenticated } = useAuth();
+    const navigate = useNavigate();
 
-  return getAccessToken() ? Navigate({to: '/'}) : children  
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate("/", { replace: true });
+        }
+    }, [isAuthenticated, navigate]);
+
+    return !isAuthenticated ? children : null;
 };
 
 export default PrivateRoute;
