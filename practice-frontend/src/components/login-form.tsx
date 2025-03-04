@@ -11,10 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import React, { useEffect, useState } from "react";
 import { useGoogleLogin } from "@react-oauth/google";
-import { Github } from "lucide-react";
+import { Github, Loader2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
-import { githubAuth, googleAuth } from "@/http";
+import { githubAuth, googleAuth, login } from "@/http";
 import { OrbitingCirclesDemo } from "./Demo";
+import { toast } from "sonner";
 
 
 
@@ -23,9 +24,27 @@ export function LoginForm({
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
   const [formData, setFormData] = useState({
-    email: "",
+    emailOrUsername: "",
     password: "",
   });
+  const loginMutation = useMutation({
+    mutationFn: login, 
+    onSuccess: (data) => {
+      toast(data.success, {
+        description: data.message
+      })
+      setTimeout(() => {
+
+        window.location.reload()
+      }, 1000)
+    },
+    onError: (err) => {
+      toast(err.name, {
+        description: err.message
+      })
+
+    }
+  })
   const googleMutation = useMutation({
     mutationFn: googleAuth,
     onSuccess: (data) => {
@@ -46,7 +65,7 @@ export function LoginForm({
 
   const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(formData)
+    loginMutation.mutate(formData)
   };
 
   const handleGoogleLogin = useGoogleLogin({
@@ -114,6 +133,7 @@ export function LoginForm({
                     variant="outline"
                     type={"button"}
                     className="w-full"
+                    // @ts-ignore
                     onClick={handleGoogleLogin}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -132,13 +152,13 @@ export function LoginForm({
                 </div>
                 <div className="grid gap-6">
                   <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="emailOrUsername">Email Or Username</Label>
                     <Input
-                      id="email"
-                      type="email"
+                      id="emailOrUsername"
+                      type="text"
                       placeholder="m@example.com"
                       required
-                      value={formData.email}
+                      value={formData.emailOrUsername}
                       onChange={handleChange}
                     />
                   </div>
@@ -161,7 +181,7 @@ export function LoginForm({
                     />
                   </div>
                   <Button type="submit" className="w-full">
-                    Login
+                   {loginMutation.isPending ? <Loader2 className="animate-spin" /> : 'Login'} 
                   </Button>
                 </div>
                 <div className="text-center text-sm">

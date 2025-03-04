@@ -4,6 +4,8 @@ import createHttpError from "http-errors";
 import { prisma } from "../../prisma";
 import { jwtHelper } from "../../shared/jwtHelper";
 import { AuthRequest } from "../../middlewares/authMiddleware";
+import bcrypt from 'bcrypt'
+import { uploadOnCloudinary } from "../../shared/cloudinary";
 export const userController = {
   async register(req: Request, res: Response, next: NextFunction) {
     try {
@@ -12,6 +14,46 @@ export const userController = {
     } catch (err) {
       return next(createHttpError(500, "Internal Server Error"));
     }
+  },
+  async login(req: Request, res: Response, next: NextFunction){
+    const {emailOrUsername, password} = req.body;
+    console.log(emailOrUsername, password)
+    if (!emailOrUsername || !password){
+      return next(createHttpError(400, 'Email/Username & Password is required!'))
+    }
+    try{
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: emailOrUsername },
+            { username: emailOrUsername }
+          ]
+        }
+      });
+      
+      if(!user){
+        return next(createHttpError(400, 'Invalid email or password'))
+      }
+      const isPasswordMatching = await bcrypt.compare(password, user.password as string)
+      if(!isPasswordMatching) {
+        return next(createHttpError(400, 'Invalid email or password'))
+      }
+      const local_access_token = jwtHelper.generateToken({
+        email: user.email,
+        id: user.providerId,
+      });
+      res.cookie("access_token", local_access_token, {
+        httpOnly: false,
+        secure: false,
+        sameSite: false,
+      });
+
+      res.json({ success: true, message: "User successful login" });
+
+    } catch(err){
+      return next(createHttpError(500, 'Internal Server Error'))
+    }
+
   },
   async googleAuth(req: Request, res: Response, next: NextFunction) {
     const { access_token } = req.query;
@@ -88,14 +130,17 @@ export const userController = {
 
       // 3. Check if the user exists in the database
       let user = await prisma.user.findUnique({
-        where: { providerId: githubUser.id.toString() }, // Ensure it's a string
+        where: { providerId: githubUser.id.toString() }, 
       });
+
+     
+      const altEmail = `${githubUser.login.toLowerCase()}@gmail.com`;
 
       // 4. If the user doesn't exist, create a new record
       if (!user) {
         user = await prisma.user.create({
           data: {
-            email: githubUser.email || "", // GitHub may not provide an email
+            email: githubUser?.email || altEmail, 
             username: githubUser.name || githubUser.login,
             avatar: githubUser.avatar_url,
             authProvider: "GITHUB",
@@ -141,5 +186,63 @@ export const userController = {
       return next(createHttpError(500, "Internal Server Error"));
     }
   },
+  async  updateUser(req: Request, res: Response, next: NextFunction) {
+    const _req = req as AuthRequest;
+    try {
+      const userId = _req.userId 
+      if (!userId) {
+        return next(createHttpError(401, "Unauthorized")) 
+      }
   
-};
+      const { username, email, password } = req.body
+      console.log(req.body)
+      console.log(req.file)
+      const updateData: Record<string, any> = {}
+  
+      if (username) {
+        const existingUser = await prisma.user.findFirst({ where: { username } })
+        if (existingUser && existingUser.providerId !== String(userId)) {
+          return next(createHttpError(400, "Username already taken")) 
+         
+        }
+        updateData.username = username
+      }
+  
+      if (email) {
+        const existingEmail = await prisma.user.findUnique({ where: { email } })
+        if (existingEmail && existingEmail.providerId !== String(userId)) {
+        
+          return next(createHttpError(400, "Email already in use")) 
+
+        }
+        updateData.email = email
+      }
+  
+      if (password) {
+        const hashedPassword = await bcrypt.hash(password, 10)
+        updateData.password = hashedPassword
+      }
+  
+      if (req.file && req.file?.buffer) {
+        updateData.avatar = await uploadOnCloudinary(req.file.buffer)
+      }
+      console.log('🚒', updateData)
+      console.log('ID:', userId)
+  
+      if (Object.keys(updateData).length === 0) {
+    
+        return next(createHttpError(400, "No valid fields provided for update")) 
+      }
+  
+      const updatedUser = await prisma.user.update({
+        where: { providerId: String(userId) },
+        data: updateData,
+      })
+  
+      res.json({ message: "User updated successfully", user: updatedUser })
+    } catch (error) {
+      next(error)
+    }
+  }
+  
+}
