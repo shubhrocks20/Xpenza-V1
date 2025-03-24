@@ -4,6 +4,7 @@ import axios from "axios";
 import cors from "cors";
 import userRouter from "./routes/users/user.routes";
 import { globalErrorHandler } from "./middlewares/globalErrorHandler";
+import billsRouter  from "./routes/biils/bills.routes";
 const app = express();
 
 app.use(
@@ -15,6 +16,7 @@ app.use(
 
 app.use(express.json());
 app.use("/api/v1/users", userRouter);
+app.use(`/api/v1/bills`, billsRouter);
 
 // app.get('/auth/github', async (req, res) => {
 //     const {code} = req.query

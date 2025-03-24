@@ -17,10 +17,7 @@ export const userController = {
   },
   async login(req: Request, res: Response, next: NextFunction){
     const {emailOrUsername, password} = req.body;
-    console.log(emailOrUsername, password)
-    if (!emailOrUsername || !password){
-      return next(createHttpError(400, 'Email/Username & Password is required!'))
-    }
+  
     try{
       const user = await prisma.user.findFirst({
         where: {
@@ -36,6 +33,7 @@ export const userController = {
       }
       const isPasswordMatching = await bcrypt.compare(password, user.password as string)
       if(!isPasswordMatching) {
+        
         return next(createHttpError(400, 'Invalid email or password'))
       }
       const local_access_token = jwtHelper.generateToken({
@@ -244,5 +242,6 @@ export const userController = {
       next(error)
     }
   }
+
   
 }

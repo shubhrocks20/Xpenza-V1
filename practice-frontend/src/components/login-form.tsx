@@ -38,9 +38,10 @@ export function LoginForm({
         window.location.reload()
       }, 1000)
     },
-    onError: (err) => {
-      toast(err.name, {
-        description: err.message
+    onError: (err : any) => {
+      console.log(err)
+      toast(err.response.data.error.message, {
+        description: err.response.data.message,
       })
 
     }

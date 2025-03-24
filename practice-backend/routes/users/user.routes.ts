@@ -2,10 +2,12 @@ import { Router } from "express";
 import { userController } from "./user.controller";
 import { authMiddleware } from "../../middlewares/authMiddleware";
 import upload from "../../middlewares/multer";
+import { validateData } from "../../middlewares/validationMiddleware";
+import { loginSchema } from "../../types/index.d";
 
 const userRouter = Router()
 userRouter.post('/manual', userController.register)
-userRouter.post('/login', userController.login)
+userRouter.post('/login',validateData(loginSchema), userController.login)
 userRouter.patch('/',[authMiddleware, upload.single('avatar')], userController.updateUser)
 userRouter.post('/auth/google', userController.googleAuth)
 userRouter.post('/auth/github', userController.githubAuth)
