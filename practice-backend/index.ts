@@ -4,7 +4,7 @@ import axios from "axios";
 import cors from "cors";
 import userRouter from "./routes/users/user.routes";
 import { globalErrorHandler } from "./middlewares/globalErrorHandler";
-import billsRouter  from "./routes/biils/bills.routes";
+import billsRouter  from "./routes/bills/bills.routes";
 const app = express();
 
 app.use(

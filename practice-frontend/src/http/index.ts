@@ -26,3 +26,26 @@ export const updateUser = async (data: FormData) => {
     return response.data
 }
 
+export const manualBill = async(data: {merchantName: string, totalAmount: number, category: string, purchaseDate: Date}) => {
+    const response = await axiosInstance.post(`/bills/manual-bill`, data)
+    return response.data
+}   
+
+export const fetchRecentUploads = async() => {
+    const response = await axiosInstance.get(`/bills/recent-uploads`)
+    return response.data.data
+}
+
+export const autoBill = async(data: FormData) => {
+    const response = await axiosInstance.post(`/bills/auto-bill`, data, {
+        headers: {
+            'Content-Type':'multipart/form-data'
+        }
+    })
+    return response.data
+}
+
+export const deletebill = async (billId : string) => {
+    const response = await axiosInstance.delete(`/bills/${billId}`)
+    return response.data
+}

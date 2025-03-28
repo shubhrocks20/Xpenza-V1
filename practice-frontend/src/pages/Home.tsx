@@ -1,5 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar";
-import XpenzaUpload from "@/components/Hero";
+import XpenzaUpload from "@/components/XpenzaUpload";
 import {
   Breadcrumb,
   BreadcrumbItem,

@@ -7,7 +7,8 @@ import { authMiddleware } from "../../middlewares/authMiddleware";
 
 const billsRouter = Router()
 
-billsRouter.post('/manual-bill', validateData(billsSchema) ,billController.manualBill);
+billsRouter.post('/manual-bill', [authMiddleware, validateData(billsSchema)] ,billController.manualBill);
 billsRouter.post('/auto-bill', [authMiddleware,uploadLocal.single('bill')], billController.autoBill);
-
+billsRouter.get('/recent-uploads', authMiddleware, billController.recentUploads);
+billsRouter.delete(`/:billId`, authMiddleware, billController.deleteBill);
 export default billsRouter
