@@ -4,7 +4,7 @@ import { processAndFetchResult } from "../../shared/tabScanner";
 import path from 'node:path';
 import { prisma } from "../../prisma";
 import { AuthRequest } from "../../middlewares/authMiddleware";
-import { deleteBillService, fetchRecentUploads, storeManualBill } from "./bills.services";
+import { deleteBillService, fetchRecentUploads, generateOcrHash, isInvalidOCR, storeManualBill } from "./bills.services";
 export const billController = {
     async manualBill(req: Request, res: Response, next: NextFunction){
         const {merchantName, totalAmount, category, purchaseDate} = req.body
@@ -31,9 +31,21 @@ export const billController = {
             const filePath = path.resolve(req.file.path);
             console.log('Resolved File Path:', filePath);
 
-            const getJSONAI = await processAndFetchResult(filePath);
+            const ocrResult = await processAndFetchResult(filePath);
+            if (!ocrResult) {
+                return res.status(500).json({ success: false, message: "Failed to process image" });
+            }
+            if (isInvalidOCR(ocrResult)) {
+                return res.status(400).json({ success: false, message: "Uploaded file is not a valid bill" });
+            }
+            const ocrHash = generateOcrHash(ocrResult.result);
+            const existingBill = await prisma.bills.findFirst({ where: { ocrHash } });
 
-            let suffixContent = `for the underline \n ${JSON.stringify(getJSONAI.result)}`;
+            if (existingBill) {
+                return res.status(409).json({ success: false, message: "This bill has already been processed" });
+            }   
+
+            let suffixContent = `for the underline \n ${JSON.stringify(ocrResult.result)}`;
             
             const aiResponse = await generateText(process.env.PREFIX_CONTENT + suffixContent)
             const extractedJsonMatch : any = aiResponse?.match(/```json\n([\s\S]*?)\n```/);
@@ -62,7 +74,8 @@ export const billController = {
                     merchantName: extractedJson.merchant_name,
                     totalAmount: extractedJson.total_amount,
                     category: extractedJson.category,
-                    userId: Number(user.id)
+                    userId: Number(user.id),
+                    ocrHash,
                 }
             })
             console.log(bill)

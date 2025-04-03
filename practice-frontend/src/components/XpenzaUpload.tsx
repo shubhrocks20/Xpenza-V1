@@ -2,7 +2,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Loader2, Upload } from "lucide-react";
 import {
   Select,
@@ -24,125 +24,93 @@ import Instructions from "./uploadInstruction";
 export default function XpenzaUpload() {
   const [file, setFile] = useState<any>(null);
   const [purchaseDate, setPurchaseDate] = useState<Date | undefined>(undefined);
-
-  // New state variables for manual form inputs
   const [merchantName, setMerchantName] = useState<string>('');
   const [totalAmount, setTotalAmount] = useState<string>('');
   const [category, setCategory] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+
   const queryClient = useQueryClient();
 
   const handleFileChange = (e: any) => {
     if (e.target.files.length > 1) {
-      toast("Only one file allowed", {
-        description: "Please upload only one file at a time.",
-      });
+      toast("Only one file allowed", { description: "Please upload only one file at a time." });
       return;
     }
     const selectedFile = e.target.files[0];
-    if (
-      selectedFile &&
-      !["image/jpeg", "image/png"].includes(selectedFile.type)
-    ) {
-      toast("Invalid file type", {
-        description: "Only JPEG and PNG files are allowed.",
-      });
+    if (selectedFile && !["image/jpeg", "image/png"].includes(selectedFile.type)) {
+      toast("Invalid file type", { description: "Only JPEG and PNG files are allowed." });
       return;
     }
     setFile(selectedFile);
+    setPreview(URL.createObjectURL(selectedFile));
   };
 
   const fileSubmitMutation = useMutation({
     mutationFn: autoBill,
     onSuccess: (data) => {
-      toast(data.success, {
-        description: data.message,
-      });
-      queryClient.invalidateQueries({queryKey: ["uploads"]});
+      toast(data.success, { description: data.message });
+      queryClient.invalidateQueries({ queryKey: ["uploads"] });
+      setFile(null);
+      setPreview(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     },
     onError: (err: any) => {
-      console.log(err);
-      toast(err.response.data.error.message, {
-        description: err.response.data.message,
-      });
-    }
+      console.log(err)
+      toast(err.response.data.success, { description: err.response.data.message });
+      setFile(null);
+      setPreview(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    },
   });
 
   const manualFormMutation = useMutation({
     mutationFn: manualBill,
     onSuccess: (data) => {
-      toast(data.success, {
-        description: data.message,
-      });
-      queryClient.invalidateQueries({queryKey: ["uploads"]});
+      toast(data.success, { description: data.message });
+      queryClient.invalidateQueries({ queryKey: ["uploads"] });
       setMerchantName('');
       setTotalAmount('');
       setCategory('');
       setPurchaseDate(undefined);
     },
     onError: (err: any) => {
-      console.log(err);
-      toast(err.response.data.error.message, {
-        description: err.response.data.message,
-      });
-    }
+    
+      toast(err.response.data.error.message, { description: err.response.data.message });
+    },
   });
 
   const handleManualSubmit = (e: any) => {
     e.preventDefault();
-
-    // Validate inputs
-    if (!merchantName.trim()) {
-      toast("Validation Error", {
-        description: "Merchant Name is required"
-      });
+    if (!merchantName.trim() || !totalAmount || parseFloat(totalAmount) <= 0 || !category) {
+      toast("Validation Error", { description: "Please fill all required fields correctly." });
       return;
     }
-
-    if (!totalAmount || parseFloat(totalAmount) <= 0) {
-      toast("Validation Error", {
-        description: "Please enter a valid amount"
-      });
-      return;
-    }
-
-    if (!category) {
-      toast("Validation Error", {
-        description: "Category is required"
-      });
-      return;
-    }
-
-    // Use the selected date or current date
-    const finalPurchaseDate = purchaseDate || new Date();
-
-    // Ensure it's a Date object
-    const dateToSend = finalPurchaseDate instanceof Date
-      ? finalPurchaseDate
-      : new Date(finalPurchaseDate);
-
-    // Implement manual form submission
     manualFormMutation.mutate({
       merchantName: merchantName.trim(),
       totalAmount: parseFloat(totalAmount),
       category: category,
-      purchaseDate: dateToSend
+      purchaseDate: purchaseDate || new Date(),
     });
-  }
+  };
 
   const handleFileSubmit = (e: any) => {
     e.preventDefault();
+    if (!file) return;
     const formData = new FormData();
-    formData.append('bill', file);
+    formData.append("bill", file);
     fileSubmitMutation.mutate(formData);
-  }
+  };
 
   return (
-    <div className="flex w-full max-w-7xl mx-auto p-6 min-h-screen ">
+    <div className="flex w-full max-w-7xl mx-auto p-6 min-h-screen">
       <div className="w-1/2 flex flex-col gap-6">
         <div className="text-center py-10">
-          <h1 className="text-4xl font-bold">
-            Xpenza: AI-Powered Expense Management
-          </h1>
+          <h1 className="text-4xl font-bold">Xpenza: AI-Powered Expense Management</h1>
           <p className="text-gray-600 mt-4 text-lg">
             Xpenza uses advanced AI to extract text from images, categorize bills,
             and keep track of payments effortlessly. Upload an image of your bill,
@@ -150,7 +118,7 @@ export default function XpenzaUpload() {
           </p>
         </div>
 
-        <Card className="p-6 ">
+        <Card className="p-6">
           <Tabs defaultValue="manual" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="manual">Manual Form</TabsTrigger>
@@ -159,20 +127,8 @@ export default function XpenzaUpload() {
 
             <TabsContent value="manual">
               <CardContent className="space-y-6 py-6">
-                <Input
-                  type="text"
-                  placeholder="Merchant Name"
-                  className="h-12"
-                  value={merchantName}
-                  onChange={(e) => setMerchantName(e.target.value)}
-                />
-                <Input
-                  type="number"
-                  placeholder="Total Amount"
-                  className="h-12"
-                  value={totalAmount}
-                  onChange={(e) => setTotalAmount(e.target.value)}
-                />
+                <Input type="text" placeholder="Merchant Name" className="h-12" value={merchantName} onChange={(e) => setMerchantName(e.target.value)} />
+                <Input type="number" placeholder="Total Amount" className="h-12" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)} />
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full h-12 text-left">
@@ -180,12 +136,7 @@ export default function XpenzaUpload() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="start" className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={purchaseDate}
-                      onSelect={setPurchaseDate}
-                      initialFocus
-                    />
+                    <Calendar mode="single" selected={purchaseDate} onSelect={setPurchaseDate} initialFocus />
                   </PopoverContent>
                 </Popover>
                 <Select value={category} onValueChange={setCategory}>
@@ -202,12 +153,8 @@ export default function XpenzaUpload() {
                     <SelectItem value="OTHER">Others</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button
-                  className="w-full h-12 text-lg"
-                  onClick={handleManualSubmit}
-                  disabled={manualFormMutation.isPending}
-                >
-                  {manualFormMutation.isPending ? <Loader2 className="animate-spin" /> : <span>Submit</span>}
+                <Button className="w-full h-12 text-lg" onClick={handleManualSubmit} disabled={manualFormMutation.isPending}>
+                  {manualFormMutation.isPending ? <Loader2 className="animate-spin" /> : "Submit"}
                 </Button>
               </CardContent>
             </TabsContent>
@@ -216,23 +163,15 @@ export default function XpenzaUpload() {
               <CardContent className="flex flex-col items-center gap-6 py-6">
                 <label className="flex flex-col items-center justify-center w-full h-52 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-100">
                   <Upload className="w-10 h-10 text-gray-500" />
-                  <span className="text-lg text-gray-600">
-                    Click or Drag to Upload
-                  </span>
-                  <input
-                    type="file"
-                    className="hidden"
-                    onChange={handleFileChange}
-                    multiple
-                  />
+                  <span className="text-lg text-gray-600">Click or Drag to Upload</span>
+                  <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} multiple />
                 </label>
-                {file && (
-                  <p className="text-md text-gray-500">
-                    Selected File: {file.name}
-                  </p>
-                )}
+                {file && <p className="text-md text-gray-500">Selected File: {file.name}</p>}
+                {preview && (
+  <img src={preview} alt="Bill Preview" className="w-40 h-40 object-cover rounded-md border" />
+)}
                 <Button className="w-full h-12 text-lg" disabled={!file || fileSubmitMutation.isPending} onClick={handleFileSubmit}>
-                  {fileSubmitMutation.isPending ? <Loader2 className="animate-spin" /> : <span>Upload</span>}
+                  {fileSubmitMutation.isPending ? <Loader2 className="animate-spin" /> : "Upload"}
                 </Button>
               </CardContent>
             </TabsContent>

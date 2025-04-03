@@ -6,6 +6,7 @@ import { jwtHelper } from "../../shared/jwtHelper";
 import { AuthRequest } from "../../middlewares/authMiddleware";
 import bcrypt from 'bcrypt'
 import { uploadOnCloudinary } from "../../shared/cloudinary";
+import { generateText } from "../../shared/textRecognition";
 export const userController = {
   async register(req: Request, res: Response, next: NextFunction) {
     try {
@@ -241,7 +242,12 @@ export const userController = {
     } catch (error) {
       next(error)
     }
-  }
+  },
+  async askMeAnything(req: Request, res: Response, next: NextFunction) {
+    const {prompt} = req.body;
 
-  
+    const result = await generateText(prompt);
+    const jsonData = JSON.parse(JSON.stringify(result))
+    res.json({message: jsonData})
+  }
 }

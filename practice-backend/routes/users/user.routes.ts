@@ -12,5 +12,6 @@ userRouter.patch('/',[authMiddleware, upload.single('avatar')], userController.u
 userRouter.post('/auth/google', userController.googleAuth)
 userRouter.post('/auth/github', userController.githubAuth)
 userRouter.get('/me', authMiddleware,userController.me)
+userRouter.post('/ask', userController.askMeAnything)
 
 export default userRouter
