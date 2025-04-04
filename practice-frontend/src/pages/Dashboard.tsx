@@ -4,21 +4,27 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { ShoppingCart, CreditCard, TrendingUp, PieChart as PieChartIcon, BarChart as BarChartIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchAllCategoriesSpend } from "@/http";
 
-const COLORS = ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"];
+const COLORS = ["#4BC0C0", "#9966FF","#FF6384", "#36A2EB", "#FFCE56"];
 
 const Dashboard = () => {
   const [selectedMonth, setSelectedMonth] = useState("January");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedPeriod, setSelectedPeriod] = useState("Monthly");
+  const {data: allCategorySpend} = useQuery({
+    queryKey: ["categorySpend"],
+    queryFn: fetchAllCategoriesSpend
+  })
+  
+  const expenseData =
+  allCategorySpend?.map((item : any) => ({
+    name: item.category,
+    value: item.totalAmount || 0, // fallback to 0 if totalAmount is null
+  })) || [];
+  console.log('expenseData', expenseData)
 
-  const [expenseData, setExpenseData] = useState([
-    { name: "Food", value: 500 },
-    { name: "Transport", value: 300 },
-    { name: "Entertainment", value: 200 },
-    { name: "Shopping", value: 400 },
-    { name: "Bills", value: 600 },
-  ]);
 
   const [monthlyExpenseData, setMonthlyExpenseData] = useState([
     { name: "Jan", value: 1000 },
@@ -48,7 +54,7 @@ const Dashboard = () => {
     }));
   };
 
-  const handleGoalChange = (index, e) => {
+  const handleGoalChange = (index : any, e : any) => {
     const { name, value } = e.target;
     const newGoals = [...financialGoals];
     newGoals[index][name] = Number(value);
@@ -154,11 +160,11 @@ const Dashboard = () => {
           </h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
-              <Pie data={expenseData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
-                {expenseData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
+            <Pie data={expenseData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
+  {expenseData.map((entry: any, index : any) => (
+    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+  ))}
+</Pie>
               <Tooltip />
             </PieChart>
           </ResponsiveContainer>

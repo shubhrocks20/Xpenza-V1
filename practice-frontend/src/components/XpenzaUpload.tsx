@@ -107,28 +107,28 @@ export default function XpenzaUpload() {
   };
 
   return (
-    <div className="flex w-full max-w-7xl mx-auto p-6 min-h-screen">
-      <div className="w-1/2 flex flex-col gap-6">
-        <div className="text-center py-10">
-          <h1 className="text-4xl font-bold">Xpenza: AI-Powered Expense Management</h1>
-          <p className="text-gray-600 mt-4 text-lg">
-            Xpenza uses advanced AI to extract text from images, categorize bills,
-            and keep track of payments effortlessly. Upload an image of your bill,
-            and Xpenza will automatically process and organize your expenses.
+    <div className="flex flex-col lg:flex-row w-full max-w-7xl mx-auto p-4 sm:p-6 min-h-screen gap-6">
+      <div className="w-full lg:w-1/2 flex flex-col gap-6">
+        <div className="text-center py-6">
+          <h1 className="text-3xl sm:text-4xl font-bold">Xpenza: AI-Powered Expense Management</h1>
+          <p className="text-gray-600 mt-4 text-base sm:text-lg">
+            Xpenza uses AI to extract text from images, categorize bills, and track your spending.
+            Upload a bill image and let Xpenza do the magic.
           </p>
         </div>
-
-        <Card className="p-6">
+  
+        <Card className="p-4 sm:p-6">
           <Tabs defaultValue="manual" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="manual">Manual Form</TabsTrigger>
               <TabsTrigger value="file">File Upload</TabsTrigger>
             </TabsList>
-
+  
             <TabsContent value="manual">
-              <CardContent className="space-y-6 py-6">
+              <CardContent className="space-y-4 sm:space-y-6 py-4 sm:py-6">
                 <Input type="text" placeholder="Merchant Name" className="h-12" value={merchantName} onChange={(e) => setMerchantName(e.target.value)} />
                 <Input type="number" placeholder="Total Amount" className="h-12" value={totalAmount} onChange={(e) => setTotalAmount(e.target.value)} />
+  
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full h-12 text-left">
@@ -139,6 +139,7 @@ export default function XpenzaUpload() {
                     <Calendar mode="single" selected={purchaseDate} onSelect={setPurchaseDate} initialFocus />
                   </PopoverContent>
                 </Popover>
+  
                 <Select value={category} onValueChange={setCategory}>
                   <SelectTrigger className="h-12">
                     <SelectValue placeholder="Select Category" />
@@ -146,30 +147,56 @@ export default function XpenzaUpload() {
                   <SelectContent>
                     <SelectItem value="SHOPPING">Shopping</SelectItem>
                     <SelectItem value="FOOD">Food</SelectItem>
-                    <SelectItem value="GROCERIES">Groceries</SelectItem>
+                    <SelectItem value="GROCERY">Groceries</SelectItem>
                     <SelectItem value="TRANSPORT">Transport</SelectItem>
                     <SelectItem value="ENTERTAINMENT">Entertainment</SelectItem>
                     <SelectItem value="UTILITIES">Utilities</SelectItem>
                     <SelectItem value="OTHER">Others</SelectItem>
                   </SelectContent>
                 </Select>
+  
+                {preview && file && (
+                  <Card className="w-full border border-gray-200 shadow-sm">
+                    <CardContent className="flex items-center gap-4 py-4">
+                      <img src={preview} alt="Preview" className="w-16 h-16 object-cover rounded-md border" />
+                      <div className="flex-1 space-y-1">
+                        <div className="text-sm font-semibold">{file.name}</div>
+                        <div className="text-xs text-gray-500">
+                          {(file.size / 1024).toFixed(2)} KB • {file.type}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+  
                 <Button className="w-full h-12 text-lg" onClick={handleManualSubmit} disabled={manualFormMutation.isPending}>
                   {manualFormMutation.isPending ? <Loader2 className="animate-spin" /> : "Submit"}
                 </Button>
               </CardContent>
             </TabsContent>
-
+  
             <TabsContent value="file">
-              <CardContent className="flex flex-col items-center gap-6 py-6">
-                <label className="flex flex-col items-center justify-center w-full h-52 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-100">
+              <CardContent className="flex flex-col items-center gap-4 sm:gap-6 py-4 sm:py-6">
+                <label className="flex flex-col items-center justify-center w-full h-52 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-100 text-center px-4">
                   <Upload className="w-10 h-10 text-gray-500" />
-                  <span className="text-lg text-gray-600">Click or Drag to Upload</span>
+                  <span className="text-base sm:text-lg text-gray-600">Click or Drag to Upload</span>
                   <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} multiple />
                 </label>
-                {file && <p className="text-md text-gray-500">Selected File: {file.name}</p>}
-                {preview && (
-  <img src={preview} alt="Bill Preview" className="w-40 h-40 object-cover rounded-md border" />
-)}
+  
+                {preview && file && (
+                  <Card className="w-full border border-gray-200 shadow-sm">
+                    <CardContent className="flex items-center gap-4 py-4">
+                      <img src={preview} alt="Preview" className="w-16 h-16 object-cover rounded-md border" />
+                      <div className="flex-1 space-y-1">
+                        <div className="text-sm font-semibold">{file.name}</div>
+                        <div className="text-xs text-gray-500">
+                          {(file.size / 1024).toFixed(2)} KB • {file.type}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+  
                 <Button className="w-full h-12 text-lg" disabled={!file || fileSubmitMutation.isPending} onClick={handleFileSubmit}>
                   {fileSubmitMutation.isPending ? <Loader2 className="animate-spin" /> : "Upload"}
                 </Button>
@@ -177,12 +204,15 @@ export default function XpenzaUpload() {
             </TabsContent>
           </Tabs>
         </Card>
+  
         <RecentUploads />
       </div>
-
-      <div className="w-1/2">
+  
+      <div className="w-full lg:w-1/2">
         <Instructions />
       </div>
     </div>
   );
+  
+  
 }

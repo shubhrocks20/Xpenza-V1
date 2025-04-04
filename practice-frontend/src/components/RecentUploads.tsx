@@ -8,6 +8,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deletebill, fetchRecentUploads } from "@/http";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function RecentUploads() {
   const { data: uploads = [], isLoading: loadingRecentUploads } = useQuery({
@@ -30,42 +32,73 @@ export default function RecentUploads() {
       });
     }
   })
+ 
+
+function formatDate(date: string) {
+  return new Date(date).toISOString().split("T")[0];
+}
+
+function handleDownload(bill: any) {
+  const doc = new jsPDF();
+
+  doc.setFontSize(18);
+  doc.text("Bill Receipt", 14, 20);
+
+  autoTable(doc, {
+    startY: 30,
+    head: [['Field', 'Value']],
+    body: [
+      ['Bill ID', bill.id],
+      ['Merchant', bill.merchantName],
+      ['Total Amount', `₹${bill.totalAmount}`],
+      ['Category', bill.category],
+      ['Purchase Date', formatDate(bill.purchaseDate)],
+      ['Uploaded On', formatDate(bill.createdAt)],
+    ],
+    styles: {
+      fontSize: 12,
+      cellPadding: 4
+    },
+    headStyles: {
+      fillColor: [100, 100, 255],
+      textColor: 255,
+      fontStyle: 'bold'
+    },
+    alternateRowStyles: {
+      fillColor: [240, 240, 240]
+    }
+  });
+
+  doc.save(`bill-${bill.id}.pdf`);
+}
 
   
 
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-lg rounded-2xl">
       <CardHeader>
-        <CardTitle className="text-xl">Recent Bill Uploads</CardTitle>
+        <CardTitle className="text-xl font-semibold text-gray-800">Recent Bill Uploads</CardTitle>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[300px]">
+        <ScrollArea className="h-[300px] pr-2">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Bill</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Action</TableHead>
+                <TableHead className="text-sm text-gray-600">Bill</TableHead>
+                <TableHead className="text-sm text-gray-600">Date</TableHead>
+                <TableHead className="text-sm text-gray-600">Amount</TableHead>
+                <TableHead className="text-sm text-gray-600">Status</TableHead>
+                <TableHead className="text-right text-sm text-gray-600">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loadingRecentUploads
                 ? Array.from({ length: 5 }).map((_, index) => (
                     <TableRow key={index}>
-                      <TableCell>
-                        <Skeleton className="w-24 h-4" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="w-20 h-4" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="w-16 h-4" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="w-20 h-6" />
-                      </TableCell>
+                      <TableCell><Skeleton className="w-24 h-4" /></TableCell>
+                      <TableCell><Skeleton className="w-20 h-4" /></TableCell>
+                      <TableCell><Skeleton className="w-16 h-4" /></TableCell>
+                      <TableCell><Skeleton className="w-20 h-6" /></TableCell>
                       <TableCell className="text-right">
                         <Skeleton className="w-10 h-10 rounded-full" />
                       </TableCell>
@@ -74,29 +107,40 @@ export default function RecentUploads() {
                 : uploads.length > 0 &&
                   uploads.map((upload: any) => (
                     <TableRow key={upload.id}>
-                      <TableCell>
-                        <span>{upload.category}</span>
+                      <TableCell className="text-sm font-medium text-gray-700">
+                        {upload.category}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-sm text-gray-600">
                         {upload.purchaseDate
                           ? new Date(upload.purchaseDate).toISOString().split("T")[0]
                           : "N/A"}
                       </TableCell>
-                      <TableCell>{upload.totalAmount}</TableCell>
+                      <TableCell className="text-sm text-gray-700">
+                        ₹{upload.totalAmount}
+                      </TableCell>
                       <TableCell>
                         <Badge
                           variant={upload.status === "Processed" ? "default" : "secondary"}
+                          className="text-xs"
                         >
                           {upload.status || "Completed"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right justify-end flex gap-4">
-                        <Button size="icon" variant="outline">
-                          <Download className="w-4 h-4" />
-                        </Button>
-                        <Button size="icon" variant="outline" onClick={() => {deleteBillMutation.mutate(upload.id)}}>
-                          <DeleteIcon className="w-4 h-4" />
-                        </Button>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button size="icon" variant="outline" onClick={() => handleDownload(upload)}>
+                            <Download className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            onClick={() => {
+                              deleteBillMutation.mutate(upload.id);
+                            }}
+                          >
+                            <DeleteIcon className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -106,4 +150,5 @@ export default function RecentUploads() {
       </CardContent>
     </Card>
   );
+  
 }

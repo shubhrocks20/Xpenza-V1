@@ -49,3 +49,8 @@ export const deletebill = async (billId : string) => {
     const response = await axiosInstance.delete(`/bills/${billId}`)
     return response.data
 }
+
+export const fetchAllCategoriesSpend = async () => {
+    const response = await axiosInstance.get(`/bills/all-categories-spend`)
+    return response.data?.data?.data
+}

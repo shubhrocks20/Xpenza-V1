@@ -8,8 +8,8 @@ export const BillsModel = z.object({
   merchantName: z.string(),
   totalAmount: z.number().int(),
   category: z.nativeEnum(Category),
-  purchaseDate: z.date(),
-  createdAt: z.date(),
+  purchaseDate: z.coerce.date(),
+  createdAt: z.coerce.date(),
   userId: z.number().int(),
   ocrHash: z.string().nullish(),
 })
