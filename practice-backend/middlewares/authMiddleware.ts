@@ -20,10 +20,8 @@ export const authMiddleware = async(req: Request, res: Response, next: NextFunct
         const _req = req as AuthRequest
         _req.userId = id
         _req.email = email
-
         next()
     } catch (err) {
-        
         return next(createHttpError(401, "Token Expired"));
     }
   

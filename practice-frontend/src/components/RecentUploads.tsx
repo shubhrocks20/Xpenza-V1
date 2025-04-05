@@ -84,7 +84,8 @@ function handleDownload(bill: any) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-sm text-gray-600">Bill</TableHead>
+                <TableHead className="text-sm text-gray-600">Merchant</TableHead>
+                <TableHead className="text-sm text-gray-600">Category</TableHead>
                 <TableHead className="text-sm text-gray-600">Date</TableHead>
                 <TableHead className="text-sm text-gray-600">Amount</TableHead>
                 <TableHead className="text-sm text-gray-600">Status</TableHead>
@@ -93,11 +94,12 @@ function handleDownload(bill: any) {
             </TableHeader>
             <TableBody>
               {loadingRecentUploads
-                ? Array.from({ length: 5 }).map((_, index) => (
+                ? Array.from({ length: 6 }).map((_, index) => (
                     <TableRow key={index}>
                       <TableCell><Skeleton className="w-24 h-4" /></TableCell>
                       <TableCell><Skeleton className="w-20 h-4" /></TableCell>
                       <TableCell><Skeleton className="w-16 h-4" /></TableCell>
+                      <TableCell><Skeleton className="w-20 h-6" /></TableCell>
                       <TableCell><Skeleton className="w-20 h-6" /></TableCell>
                       <TableCell className="text-right">
                         <Skeleton className="w-10 h-10 rounded-full" />
@@ -108,9 +110,12 @@ function handleDownload(bill: any) {
                   uploads.map((upload: any) => (
                     <TableRow key={upload.id}>
                       <TableCell className="text-sm font-medium text-gray-700">
+                        {upload.merchantName.split(' ')[0]}
+                      </TableCell>
+                      <TableCell className="text-sm font-medium text-gray-700">
                         {upload.category}
                       </TableCell>
-                      <TableCell className="text-sm text-gray-600">
+                      <TableCell  className="text-sm text-gray-600">
                         {upload.purchaseDate
                           ? new Date(upload.purchaseDate).toISOString().split("T")[0]
                           : "N/A"}

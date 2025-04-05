@@ -41,8 +41,6 @@ export const billController = {
   async autoBill(req: Request, res: Response, next: NextFunction) {
     try {
       const _req = req as AuthRequest;
-      console.log("Uploaded File:", req.file);
-
       if (!req.file) {
         res.status(400).json({ success: false, message: "No file uploaded" });
         return;
@@ -59,24 +57,20 @@ export const billController = {
         return;
       }
       if (isInvalidOCR(ocrResult)) {
-        res
-          .status(400)
-          .json({
-            success: false,
-            message: "Uploaded file is not a valid bill",
-          });
+        res.status(400).json({
+          success: false,
+          message: "Uploaded file is not a valid bill",
+        });
         return;
       }
       const ocrHash = generateOcrHash(ocrResult.result);
       const existingBill = await prisma.bills.findFirst({ where: { ocrHash } });
 
       if (existingBill) {
-        res
-          .status(409)
-          .json({
-            success: false,
-            message: "This bill has already been processed",
-          });
+        res.status(409).json({
+          success: false,
+          message: "This bill has already been processed",
+        });
         return;
       }
 
@@ -98,7 +92,7 @@ export const billController = {
       }
       const extractedJson = JSON.parse(extractedJsonMatch[1]);
       console.log(extractedJson, "USR ID:", _req.userId);
-      const providerId = _req.userId; 
+      const providerId = _req.userId;
 
       const user = await prisma.user.findUnique({
         where: { providerId: providerId },
