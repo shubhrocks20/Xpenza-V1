@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useLocation } from "react-router-dom";
 import Dashboard from "./Dashboard";
+import AISuggest from "./AI";
 
 export default function Home() {
   const location = useLocation()
@@ -35,9 +36,13 @@ export default function Home() {
           </Breadcrumb>
         </header>
         <div className="">
-          {
-            pathname === 'dashboard' ? <Dashboard /> : <XpenzaUpload />
-          }
+          {pathname === 'dashboard' ? (
+            <Dashboard />
+          ) : pathname === 'ai-suggest' ? (
+            <AISuggest />
+          ) : (
+            <XpenzaUpload />
+          )}
           
         </div>
       </SidebarInset>

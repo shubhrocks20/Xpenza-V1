@@ -1,5 +1,5 @@
 import * as React from "react";
-import { HomeIcon, LayoutDashboardIcon, Plus } from "lucide-react";
+import { HomeIcon, LayoutDashboardIcon, Plus, RocketIcon, RockingChairIcon } from "lucide-react";
 
 
 import { NavUser } from "@/components/nav-user";
@@ -45,6 +45,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </Link>
 
         <SidebarSeparator className="mx-0" />
+        <Link to="/ai-suggest">
+        <SidebarMenuButton >
+          <RocketIcon />
+          <span>AI Suggest</span>
+        </SidebarMenuButton>
+        </Link>
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>

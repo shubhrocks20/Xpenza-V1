@@ -28,6 +28,15 @@ export const router = createBrowserRouter([
       <Home />
     </ProtectedRoute>
   )
-}
+},
+{
+  path: '/ai-suggest',
+  element: (
+    <ProtectedRoute>
+      <Home />
+    </ProtectedRoute>
+  )
+},
+
   
 ]);
